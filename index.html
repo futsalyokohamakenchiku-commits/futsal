@@ -16,10 +16,10 @@ nav{display:flex;overflow-x:auto;gap:2px}nav button{flex:none;background:none;bo
 nav button.on{color:#fff;border-color:#facc15;font-weight:700}
 main{padding:12px}h2{font-size:15px;margin:18px 0 6px}
 .sc{overflow-x:auto;background:var(--w);border-radius:8px;border:1px solid var(--ln)}
-table{border-collapse:collapse;width:100%;font-size:12px;text-align:center}
-td,th{border:1px solid var(--ln);padding:5px 3px;white-space:nowrap}th{background:#e3e9e0}
-td.n,th.n{text-align:left;position:sticky;left:0;background:#fff;max-width:96px;overflow:hidden;text-overflow:ellipsis}th.n{background:#e3e9e0}
-td.x{background:#dde2da}.rk{font-weight:700;color:var(--ac)}small{display:block;color:#666;font-size:10px}
+table{border-collapse:collapse;width:max-content;min-width:100%;font-size:13px;text-align:center}
+td,th{border:1px solid var(--ln);padding:6px 8px;white-space:nowrap}th.h{white-space:normal;word-break:break-all;min-width:76px;max-width:96px;font-size:12px}th{background:#e3e9e0}
+td.n,th.n{text-align:left;position:sticky;left:0;background:#fff;min-width:104px;max-width:132px;overflow:hidden;text-overflow:ellipsis}th.n{background:#e3e9e0}
+td.x{background:#dde2da}.rk{font-weight:700;color:var(--ac)}small{display:block;color:#666;font-size:11px}
 .mr{display:grid;grid-template-columns:44px 1fr 56px 1fr;gap:4px;align-items:center;background:var(--w);border:1px solid var(--ln);border-radius:8px;padding:7px 8px;margin-bottom:5px}
 .mr .a{text-align:right}.mr em{font-style:normal;font-weight:700;text-align:center}.mr small{grid-column:1/-1;text-align:center}
 .note{background:#fef3c7;border-radius:8px;padding:6px 10px;font-size:12px;margin-bottom:8px}
@@ -38,50 +38,57 @@ const $=s=>document.querySelector(s),C=window.CFG||{},GS=['A','B','C'],TN=['決�
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let S={};try{S=JSON.parse(localStorage.fs||'{}')}catch(e){}
 let ed=!!localStorage.fsEd,tab='A',court='A',db=null,sdk=false;
-const nm=id=>S.teams?.[id]?.n||'未定',R=k=>S.m?.[k]||{};
+const tt=k=>S.m?.[k[0]=='T'?'T0'+k.slice(2):'A'+k.slice(1)]?.t||'';const nm=id=>S.teams?.[id]?.n||'未定',R=k=>S.m?.[k]||{};
 const teamsOf=g=>Object.entries(S.teams||{}).filter(([,t])=>t.g==g).sort((a,b)=>a[0]<b[0]?-1:1).map(([id,t])=>({id,n:t.n}));
 function fx(g){const a=teamsOf(g).map(t=>t.id);if(a.length<2)return[];if(a.length%2)a.push(null);const n=a.length,o=[];
  for(let r=0;r<n-1;r++){for(let i=0;i<n/2;i++){const p=a[i],q=a[n-1-i];if(p&&q)o.push([p,q])}a.splice(1,0,a.pop())}return o}
 const gm=g=>fx(g).map((f,k)=>({key:g+(k+1),a:f[0],b:f[1],lb:g+'-'+(k+1)}));
 const score=m=>{const r=R(m.key);return r.x!=null&&r.a==m.a&&r.b==m.b?r:null};
-function stand(g){const T=teamsOf(g),n=T.length,P={},M={};T.forEach((t,i)=>P[t.id]={...t,i,w:0,d:0,l:0,gf:0,ga:0,p:0,pl:0});
+function stand(g){const T=teamsOf(g),n=T.length,P={},M={};T.forEach((t,i)=>P[t.id]={...t,g,i,w:0,d:0,l:0,gf:0,ga:0,p:0,pl:0});
  gm(g).forEach(m=>{const r=score(m);if(!r)return;const a=P[m.a],b=P[m.b];a.pl++;b.pl++;a.gf+=r.x;a.ga+=r.y;b.gf+=r.y;b.ga+=r.x;M[m.a+m.b]=[r.x,r.y];M[m.b+m.a]=[r.y,r.x];
   if(r.x>r.y){a.w++;a.p+=3;b.l++}else if(r.x<r.y){b.w++;b.p+=3;a.l++}else{a.d++;b.d++;a.p++;b.p++}});
- const mx=Math.max(1,(n-1)*3),L=Object.values(P);L.forEach(t=>{t.gd=t.gf-t.ga;t.rate=t.p/mx});
+ const mx=Math.max(1,(n-1)*3),L=Object.values(P);L.forEach(t=>{t.gd=t.gf-t.ga;t.rate=t.p/mx;t.mx=mx});
  L.sort((a,b)=>b.p-a.p||b.rate-a.rate||b.gd-a.gd||b.gf-a.gf||a.i-b.i);L.forEach((t,i)=>t.r=i+1);L.M=M;return L}
 const Q=(a,b)=>b.rate-a.rate||b.gd-a.gd||b.gf-a.gf;
 function seeds(){const G=GS.map(stand).filter(l=>l.length),Rk=[0,1,2,3].map(i=>G.map(l=>l[i]).filter(Boolean).sort(Q));
- return[[...Rk[0],...Rk[1].slice(0,1)],[...Rk[1].slice(1),...Rk[2].slice(0,2)],[...Rk[2].slice(2),...Rk[3]]].map(a=>a.sort((x,y)=>x.r-y.r||Q(x,y)).map(t=>t.id))}
+ return[[...Rk[0],...Rk[1].slice(0,1)],[...Rk[1].slice(1),...Rk[2].slice(0,2)],[...Rk[2].slice(2),...Rk[3]]].map((a,k)=>{const o=S.ov?.['T'+k];return o?o.split(',').map(x=>x||undefined):a.sort((x,y)=>x.r-y.r||Q(x,y)).map(t=>t.id)})}
 function win(m){const r=R(m.key);if(!m.a||!m.b||r.x==null||r.a!=m.a||r.b!=m.b)return null;return r.x>r.y?m.a:r.x<r.y?m.b:r.w==1?m.a:r.w==2?m.b:null}
-function tm(k){const s=seeds()[k]||[],a=[{key:`T${k}s1`,a:s[0],b:s[3],lb:'準決勝1'},{key:`T${k}s2`,a:s[1],b:s[2],lb:'準決勝2'}];a.push({key:`T${k}f`,a:win(a[0]),b:win(a[1]),lb:'決勝'});return a}
-function ML(ms){return ms.slice().sort((p,q)=>(R(p.key).t||'99:99')<(R(q.key).t||'99:99')?-1:1).map(m=>{const r=score(m)||(m.key[0]=='T'&&R(m.key).a==m.a&&R(m.key).b==m.b&&R(m.key).x!=null?R(m.key):null);
- return`<div class="mr"><b>${R(m.key).t||'--:--'}</b><span class="a">${esc(nm(m.a))}</span><em>${r?r.x+' - '+r.y:'vs'}</em><span>${esc(nm(m.b))}</span>${r&&r.x==r.y&&r.w?`<small>PK ${esc(nm(r.w==1?m.a:m.b))}の勝ち</small>`:''}<small>${m.lb}</small></div>`}).join('')||'<div class="card">試合がありません</div>'}
+function tm(k){const s=seeds()[k]||[],a=[{key:`T${k}s1`,a:s[0],b:s[3],lb:'準決勝1'},{key:`T${k}s2`,a:s[1],b:s[2],lb:'準決勝2'}];a.push({key:`T${k}f`,a:win(a[0]),b:win(a[1]),lb:'決勝'});if(S.cfg?.['p'+k])a.push({key:`T${k}p`,a:lose(a[0]),b:lose(a[1]),lb:'3位決定戦'});return a}
+function lose(m){const w=win(m);return w?(w==m.a?m.b:m.a):null}
+function ML(ms){return ms.slice().sort((p,q)=>(tt(p.key)||'99:99')<(tt(q.key)||'99:99')?-1:1).map(m=>{const r=score(m)||(m.key[0]=='T'&&R(m.key).a==m.a&&R(m.key).b==m.b&&R(m.key).x!=null?R(m.key):null);
+ return`<div class="mr"><b>${tt(m.key)||'--:--'}</b><span class="a">${esc(nm(m.a))}</span><em>${r?r.x+' - '+r.y:'vs'}</em><span>${esc(nm(m.b))}</span>${r&&r.x==r.y&&r.w?`<small>PK ${esc(nm(r.w==1?m.a:m.b))}の勝ち</small>`:''}<small>${m.lb}</small></div>`}).join('')||'<div class="card">試合がありません</div>'}
 function groupView(g){const L=stand(g);if(!L.length)return'<div class="card">このグループのチームはまだ登録されていません</div>';
- const hd=L.slice().sort((a,b)=>a.i-b.i);let h=`<h2>${g}コート 予選リーグ</h2><div class="sc"><table><tr><th class="n">チーム</th>${hd.map(t=>`<th>${t.i+1}</th>`).join('')}<th>勝点</th><th>得失</th><th>順位</th></tr>`;
+ const hd=L.slice().sort((a,b)=>a.i-b.i),mx=(L.length-1)*3;let h=`<h2>${g}コート 予選リーグ</h2><div class="sc"><table><tr><th class="n">チーム</th>${hd.map(t=>`<th class="h">${t.i+1}<br>${esc(t.n)}</th>`).join('')}<th>勝点</th><th>勝点率</th><th>得失点差</th><th>順位</th></tr>`;
  hd.forEach(a=>{h+=`<tr><td class="n">${a.i+1} ${esc(a.n)}</td>`;hd.forEach(b=>{if(a.id==b.id)return h+='<td class="x"></td>';const s=L.M[a.id+b.id];h+=s?`<td>${s[0]>s[1]?'○':s[0]<s[1]?'●':'△'}<small>${s[0]}-${s[1]}</small></td>`:'<td></td>'});
-  h+=`<td><b>${a.p}</b><small>${(a.rate*100).toFixed(0)}%</small></td><td>${a.gd>0?'+':''}${a.gd}</td><td class="rk">${a.r}</td></tr>`});
- return h+`</table></div><div style="font-size:11px;color:#666;margin-top:4px">勝3・分1・負0／順位: 勝点→勝点率→得失点差→総得点</div><h2>試合情報</h2>`+ML(gm(g))}
+  h+=`<td><b>${a.p}</b></td><td>${(a.rate*100).toFixed(1)}%<small>${a.p}/${mx}</small></td><td>${a.gd>0?'+':''}${a.gd}</td><td class="rk">${a.r}</td></tr>`});
+ return h+`</table></div><div style="font-size:12px;color:#555;margin-top:6px;line-height:1.6">勝点: 勝ち3・引き分け1・負け0<br>勝点率 ＝ 獲得勝点 ÷ 最大勝点（最大勝点 ＝ (チーム数−1)×3。このグループは${mx}点）<br>順位: 勝点 → 勝点率 → 得失点差 → 総得点</div><h2>試合情報</h2>`+ML(gm(g))}
 function brk(k){const [s1,s2,f]=tm(k),w1=win(s1),w2=win(s2),wf=win(f),sg=[],tx=[];
  const T=(x,y,id,b)=>tx.push(`<text x="${x}" y="${y-5}" font-size="12"${b?' font-weight="700"':''}>${esc(nm(id))}</text>`);
  [[s1,30,62,46,w1],[s2,128,160,144,w2]].forEach(([m,ya,yb,ym,w])=>{[[m.a,ya],[m.b,yb]].forEach(([id,y])=>{const r=!!w&&w==id;sg.push([0,y,110,y,r],[110,y,110,ym,r]);T(4,y,id)});sg.push([110,ym,150,ym,!!w])});
  sg.push([150,46,260,46,!!wf&&wf==w1],[260,46,260,95,!!wf&&wf==w1],[150,144,260,144,!!wf&&wf==w2],[260,144,260,95,!!wf&&wf==w2],[260,95,340,95,!!wf]);
  T(154,46,w1);T(154,144,w2);if(wf)T(264,95,wf,1);
  const ln=(x)=>sg.filter(s=>!!s[4]==x).map(s=>`<line x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}" stroke="${x?'#dc2626':'#94a3b8'}" stroke-width="${x?5:2}" stroke-linecap="round"/>`).join('');
- return`<svg viewBox="-4 0 350 190">${ln(false)}${ln(true)}${tx.join('')}</svg>`}
+ const p=S.cfg?.['p'+k]?tm(k)[3]:null,wp=p&&win(p);const p3=p?`<text x="4" y="204" font-size="12">3位決定戦 ${wp?'勝者: '+esc(nm(wp)):'（未実施）'}</text>`:'';
+ return`<svg viewBox="-4 0 350 ${p?212:190}">${ln(false)}${ln(true)}${tx.join('')}${p3}</svg>`}
+function cmp(){const c=GS.map(stand).map(l=>l[1]).filter(Boolean).sort(Q);if(!c.length)return'';return`<h2>各組2位の比較（勝点率が最も高いチームが決勝Tへ）</h2><div class="sc"><table><tr><th class="n">チーム</th><th>勝点</th><th>勝点率</th><th>得失点差</th></tr>${c.map((t,i)=>`<tr><td class="n${i?'':' rk'}">${i?'':'◎ '}${t.g}組 ${esc(t.n)}</td><td>${t.p}</td><td>${(t.rate*100).toFixed(1)}%<small>${t.p}/${t.mx}</small></td><td>${t.gd>0?'+':''}${t.gd}</td></tr>`).join('')}</table></div>`}
 function tourView(){const done=GS.every(g=>gm(g).every(m=>score(m)));const any=GS.some(g=>teamsOf(g).length);
  return(any&&!done?'<div class="note">予選が終わっていないため、組み合わせは暫定です（試合ごとに自動で更新されます）</div>':'')+
-  '<div style="font-size:12px;color:#555">決勝T＝各組1位＋2位のうち勝点率最上位。5〜8位T＝残り2位＋3位上位2チーム。9〜12位T＝残りの3位＋4位。</div>'+
+  '<div style="font-size:12px;color:#555">決勝T＝各組1位＋2位のうち勝点率最上位。5〜8位T＝残り2位＋3位上位2チーム。9〜12位T＝残りの3位＋4位。</div>'+cmp()+
   [0,1,2].map(k=>`<h2>${TN[k]}</h2>${brk(k)}<h2 style="font-size:13px">試合情報</h2>${ML(tm(k))}`).join('')}
 function regView(){let h='<h2>チーム登録</h2><div class="row"><select id="rg">'+GS.map(g=>`<option>${g}</option>`).join('')+'</select><input id="rn" placeholder="チーム名" style="flex:1;min-width:120px"><button class="p" onclick="addT()">追加</button></div>';
  GS.forEach(g=>{h+=`<div class="card"><b>${g}グループ（${teamsOf(g).length}チーム）</b>`+teamsOf(g).map(t=>`<div class="row" style="margin:4px 0">${esc(t.n)}<button class="p g" style="margin-left:auto;padding:3px 10px" onclick="delT('${t.id}')">削除</button></div>`).join('')+'</div>'});
- h+='<h2>試合時間の設定</h2><div style="font-size:12px;color:#555;margin-bottom:6px">チーム登録後に対戦カードが自動で作成されます。変更すると各タブの試合情報に反映されます。</div>';
- const blk=(t,ms)=>`<div class="card"><b>${t}</b>`+ms.map(m=>`<div class="row" style="margin:4px 0"><span style="flex:1;font-size:12px">${m.lb} ${esc(nm(m.a))} vs ${esc(nm(m.b))}</span><input type="time" value="${R(m.key).t||''}" onchange="setT('${m.key}',this.value)"></div>`).join('')+'</div>';
- GS.forEach(g=>h+=blk(g+'コート予選',gm(g)));[0,1,2].forEach(k=>h+=blk(TN[k],tm(k)));
- return h+'<h2>バックアップ</h2><button class="p g" onclick="bak()">データをJSONで保存</button>'}
+ h+='<h2>試合時間の設定</h2><div style="font-size:12px;color:#555;margin-bottom:6px">試合時間はA・B・Cコート共通です。予選の第◯試合、トーナメントの各試合は、全コートで同じ時間として表示されます。</div>';
+ const blk=(t,ms)=>`<div class="card"><b>${t}</b>`+ms.map(m=>`<div class="row" style="margin:4px 0"><span style="flex:1;font-size:12px">${m.lb}</span><input type="time" value="${tt(m.key)}" onchange="setT('${m.key}',this.value)"></div>`).join('')+'</div>';
+ h+=blk('予選（A・B・Cコート共通）',Array.from({length:15},(_,i)=>({key:'A'+(i+1),lb:'第'+(i+1)+'試合'})));h+=blk('トーナメント（3つ共通）',[{key:'T0s1',lb:'準決勝1'},{key:'T0s2',lb:'準決勝2'},{key:'T0f',lb:'決勝'},{key:'T0p',lb:'3位決定戦（行う場合）'}]);
+ const all=GS.flatMap(g=>teamsOf(g).map(t=>({...t,g}))),sd=seeds();
+ h+='<h2>トーナメントの出場チーム・3位決定戦</h2><div style="font-size:12px;color:#555;margin-bottom:6px">シード1vs4、2vs3で準決勝。予選結果から自動設定されますが、ここで変更できます（変更するとその枠の試合結果は表示されなくなります）。</div>';
+ [0,1,2].forEach(k=>{const o=S.ov?.['T'+k];h+=`<div class="card"><b>${TN[k]}</b>`+[0,1,2,3].map(i=>`<div class="row" style="margin:4px 0"><span style="width:56px">シード${i+1}</span><select id="sd${k}_${i}" onchange="saveOv(${k})" style="flex:1"><option value="">未定</option>${all.map(t=>`<option value="${t.id}" ${sd[k]?.[i]==t.id?'selected':''}>${t.g}：${esc(t.n)}</option>`).join('')}</select></div>`).join('')+
+  `<div class="row"><label><input type="checkbox" ${S.cfg?.['p'+k]?'checked':''} onchange="W('cfg',{p${k}:this.checked?1:null})"> 3位決定戦を行う</label>${o?`<button class="p g" style="margin-left:auto" onclick="W('ov',{T${k}:null})">自動に戻す</button>`:''}</div></div>`});
+ return h+'<h2>バックアップ・新年度</h2><div class="row"><button class="p g" onclick="bak()">データをJSONで保存</button><button class="p" style="background:var(--red)" onclick="newSeason()">新年度の準備（全データ削除）</button></div>'}
 function resView(){const ms=court.length==1?gm(court):tm(+court[1]);
  return`<div class="row"><select id="ct" onchange="court=this.value;render()">${GS.map(g=>`<option value="${g}">${g}コート予選</option>`).join('')}${TN.map((t,k)=>`<option value="T${k}">${t}</option>`).join('')}</select></div>`+
  ms.map(m=>{const r=R(m.key),ok=r.a==m.a&&r.b==m.b,tn=m.key[0]=='T';if(!m.a||!m.b)return`<div class="card">${m.lb}　対戦チーム未確定</div>`;
- return`<div class="card"><div style="font-size:12px;color:#555">${m.lb}　${R(m.key).t||'--:--'}</div><div class="row"><span style="flex:1">${esc(nm(m.a))}</span><input class="sx" id="x_${m.key}" type="number" inputmode="numeric" min="0" value="${ok&&r.x!=null?r.x:''}">－<input class="sx" id="y_${m.key}" type="number" inputmode="numeric" min="0" value="${ok&&r.y!=null?r.y:''}"><span style="flex:1;text-align:right">${esc(nm(m.b))}</span></div>
+ return`<div class="card"><div style="font-size:12px;color:#555">${m.lb}　${tt(m.key)||'--:--'}</div><div class="row"><span style="flex:1">${esc(nm(m.a))}</span><input class="sx" id="x_${m.key}" type="number" inputmode="numeric" min="0" value="${ok&&r.x!=null?r.x:''}">－<input class="sx" id="y_${m.key}" type="number" inputmode="numeric" min="0" value="${ok&&r.y!=null?r.y:''}"><span style="flex:1;text-align:right">${esc(nm(m.b))}</span></div>
  <div class="row">${tn?`<select id="w_${m.key}"><option value="">同点時の勝者</option><option value="1" ${ok&&r.w==1?'selected':''}>${esc(nm(m.a))}</option><option value="2" ${ok&&r.w==2?'selected':''}>${esc(nm(m.b))}</option></select>`:''}<button class="p" onclick="saveR('${m.key}','${m.a}','${m.b}',${tn})">保存</button><button class="p g" onclick="clrR('${m.key}')">取消</button></div></div>`}).join('')}
 const VW={A:()=>groupView('A'),B:()=>groupView('B'),C:()=>groupView('C'),T:tourView,reg:regView,res:resView};
 const LB={A:'Aコート予選',B:'Bコート予選',C:'Cコート予選',T:'トーナメント',reg:'登録',res:'結果登録'};
@@ -106,6 +113,8 @@ function setT(k,v){W('m/'+k,{t:v||null})}
 function saveR(k,a,b,tn){const x=$('#x_'+k).value,y=$('#y_'+k).value;if(x===''||y==='')return alert('両チームの得点を入力してください');const w=tn?$('#w_'+k).value:'';
  if(tn&&+x==+y&&!w)return alert('同点のため、勝者を選んでください');W('m/'+k,{a,b,x:+x,y:+y,w:tn&&+x==+y?+w:null});}
 function clrR(k){if(confirm('この試合結果を取り消しますか？'))W('m/'+k,{x:null,y:null,w:null,a:null,b:null})}
+function saveOv(k){W('ov',{['T'+k]:[0,1,2,3].map(i=>$('#sd'+k+'_'+i).value).join(',')})}
+function newSeason(){if(!confirm('今年のデータをバックアップ保存したうえで、全チーム・全結果を削除します。よろしいですか？'))return;if(prompt('削除する場合は「削除」と入力してください')!=='削除')return;bak();setTimeout(()=>db.ref('futsal').remove(),800)}
 function bak(){const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));l.download='futsal-backup-'+new Date().toISOString().slice(0,10)+'.json';l.click()}
 render();pull();if(ed&&C.databaseURL)initSDK();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');

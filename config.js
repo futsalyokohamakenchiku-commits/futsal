@@ -1,7 +1,9 @@
-// Firebaseコンソール > プロジェクトの設定 > マイアプリ(Web) の値を貼り付けてください
 window.CFG={
-  apiKey:"",
-  authDomain:"YOUR-PROJECT.firebaseapp.com",
-  databaseURL:"https://YOUR-PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"YOUR-PROJECT"
+  apiKey:"AIzaSyBakhQ3-mc4u_QgoBr6Yq2QG4Imkk28Ge8",
+  authDomain:"futsal-866d5.firebaseapp.com",
+  databaseURL:"https://futsal-866d5-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"futsal-866d5",
+  storageBucket:"futsal-866d5.firebasestorage.app",
+  messagingSenderId:"108265090023",
+  appId:"1:108265090023:web:b8f6a1e8cb8402e70dab42"
 };

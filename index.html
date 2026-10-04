@@ -31,6 +31,7 @@ svg{width:100%;max-width:420px;background:#fff;border-radius:8px;border:1px soli
 </style></head><body>
 <header><h1><span>フットサル大会 対戦成績</span><button id="lg"></button></h1><nav id="nv"></nav></header>
 <main id="v"></main>
+<div id="st" style="text-align:center;font-size:11px;color:#667;padding:4px 12px 28px"></div>
 <dialog id="dl"><div class="row"><b>編集者ログイン</b></div><div class="row"><input id="em" type="email" placeholder="メールアドレス" autocomplete="username" style="width:100%"></div><div class="row"><input id="pw" type="password" placeholder="パスワード" autocomplete="current-password" style="width:100%"></div><div id="er" style="color:var(--red);font-size:12px"></div><div class="row"><button class="p" onclick="login()">ログイン</button><button class="p g" onclick="dl.close()">閉じる</button></div></dialog>
 <dialog id="cf"><div id="cm" style="margin-bottom:10px"></div><input id="ci" style="width:100%;margin-bottom:8px;display:none"><div class="row"><button class="p" id="cok">OK</button><button class="p g" onclick="$('#cf').close()">キャンセル</button></div></dialog>
 <div id="tp" style="position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 14px);background:#14213d;color:#fff;padding:10px 12px;border-radius:8px;display:none;z-index:99"></div>
@@ -100,27 +101,28 @@ function render(){if(!C.databaseURL){$('#v').innerHTML='<div class="note">config
  $('#lg').textContent=ed?'ログアウト':'編集';$('#lg').onclick=ed?logout:()=>{dl.showModal()};
  $('#v').innerHTML=VW[tab]();const c=$('#ct');if(c)c.value=court}
 function soft(){const a=document.activeElement;if(ed&&(tab=='reg'||tab=='res')&&a&&a.matches('input,select'))return;render()}
+const VER='v6',stat=t=>{$('#st').textContent=VER+' / '+t};window.onerror=(m)=>{try{tip('エラー: '+m)}catch(e){}};
 const BASE=()=>C.databaseURL.replace(/\/$/,'');
-async function pull(f){if(!C.databaseURL||(document.hidden&&!f))return;try{const r=await fetch(BASE()+'/futsal.json',{cache:'no-store'});if(!r.ok)return;S=(await r.json())||{};localStorage.fs=JSON.stringify(S);soft()}catch(e){}}
+async function pull(f){if(!C.databaseURL||(document.hidden&&!f))return;try{const r=await fetch(BASE()+'/futsal.json',{cache:'no-store'});if(!r.ok){stat('データ取得エラー '+r.status);return}S=(await r.json())||{};localStorage.fs=JSON.stringify(S);stat('最終更新 '+new Date().toLocaleTimeString('ja-JP')+(ed?' / 編集モード':''));soft()}catch(e){stat('データ取得エラー（通信できません）')}}
 setInterval(()=>pull(),15000);document.addEventListener('visibilitychange',()=>pull());
 function load(u){return new Promise((ok,ng)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=ng;document.head.appendChild(s)})}
 async function initSDK(){if(sdk)return;sdk=true;try{const b='https://www.gstatic.com/firebasejs/10.12.2/firebase-';await load(b+'app-compat.js');await load(b+'auth-compat.js');
  firebase.initializeApp(C);firebase.auth().onAuthStateChanged(u=>{ed=!!u;localStorage.fsEd=u?'1':'';render();pull(true)})}catch(e){sdk=false;throw e}}
-async function api(m,p,b){const t=await firebase.auth().currentUser.getIdToken();const r=await fetch(BASE()+'/futsal'+(p?'/'+p:'')+'.json?auth='+t+'&x-http-method-override='+m,{method:'POST',body:b==null?undefined:JSON.stringify(b)});if(!r.ok)throw new Error(r.status)}
+async function api(m,p,b){if(!window.firebase||!firebase.auth)throw new Error('ログイン機能を読み込めていません。通信制限の可能性があります');if(!firebase.auth().currentUser)throw new Error('ログインが切れています。再ログインしてください');const t=await firebase.auth().currentUser.getIdToken();const r=await fetch(BASE()+'/futsal'+(p?'/'+p:'')+'.json?auth='+t+'&x-http-method-override='+m,{method:'POST',body:b==null?undefined:JSON.stringify(b)});if(!r.ok)throw new Error(r.status+' '+(await r.text()).slice(0,80))}
 async function login(){$('#er').textContent='';try{await initSDK();await firebase.auth().signInWithEmailAndPassword($('#em').value.trim(),$('#pw').value);dl.close();$('#pw').value=''}catch(e){$('#er').textContent='ログインできませんでした'}}
-async function logout(){await firebase.auth().signOut();ed=false;localStorage.fsEd='';location.reload()}
+async function logout(){try{await firebase.auth().signOut()}catch(e){}ed=false;localStorage.fsEd='';location.reload()}
 const bl=()=>{const a=document.activeElement;a&&a.blur&&a.blur()};
 function tip(m){const t=$('#tp');t.textContent=m;t.style.display='block';clearTimeout(tip.h);tip.h=setTimeout(()=>t.style.display='none',3500)}
 function ask(m,fn,w){$('#cm').textContent=m;const i=$('#ci');i.value='';i.style.display=w?'block':'none';i.placeholder='「'+w+'」と入力';$('#cok').onclick=()=>{if(w&&i.value.trim()!==w)return tip('「'+w+'」と入力してください');$('#cf').close();bl();fn()};$('#cf').showModal()}
-const W=(p,v,ok)=>api('PATCH',p,v).then(()=>{ok&&tip(ok);pull(true)}).catch(()=>tip('保存できませんでした。ログイン状態と通信を確認してください'));
-function addT(){const n=$('#rn').value.trim();if(!n)return;api('PUT','teams/'+Date.now(),{n,g:$('#rg').value}).then(()=>{tip('追加しました');pull(true)}).catch(()=>tip('追加できませんでした。ログイン状態と通信を確認してください'));$('#rn').value='';bl()}
-function delT(id){ask(nm(id)+'を削除しますか？（対戦カードが組み直されます）',()=>api('DELETE','teams/'+id).then(()=>{tip('削除しました');pull(true)}).catch(()=>tip('削除できませんでした。ログイン状態とデータベースのルールを確認してください')))}
+const W=(p,v,ok)=>api('PATCH',p,v).then(()=>{ok&&tip(ok);pull(true)}).catch(e=>tip('保存できませんでした: '+e.message));
+function addT(){const n=$('#rn').value.trim();if(!n)return;api('PUT','teams/'+Date.now(),{n,g:$('#rg').value}).then(()=>{tip('追加しました');pull(true)}).catch(e=>tip('追加できませんでした: '+e.message));$('#rn').value='';bl()}
+function delT(id){ask(nm(id)+'を削除しますか？（対戦カードが組み直されます）',()=>api('DELETE','teams/'+id).then(()=>{tip('削除しました');pull(true)}).catch(e=>tip('削除できませんでした: '+e.message)))}
 function setT(k,v){W('m/'+k,{t:v||null},'時間を保存しました')}
 function saveR(k,a,b,tn){const x=$('#x_'+k).value,y=$('#y_'+k).value;if(x===''||y==='')return tip('両チームの得点を入力してください');const w=tn?$('#w_'+k).value:'';
  if(tn&&+x==+y&&!w)return tip('同点のため、勝者を選んでください');W('m/'+k,{a,b,x:+x,y:+y,w:tn&&+x==+y?+w:null},'保存しました');bl()}
 function clrR(k){ask('この試合結果を取り消しますか？',()=>W('m/'+k,{x:null,y:null,w:null,a:null,b:null},'取り消しました'))}
 function saveOv(k){W('ov',{['T'+k]:[0,1,2,3].map(i=>$('#sd'+k+'_'+i).value).join(',')})}
-function newSeason(){ask('今年のデータをバックアップ保存したうえで、全チーム・全結果を削除します。',()=>{bak();setTimeout(()=>api('DELETE','').then(()=>{tip('全データを削除しました');pull(true)}).catch(()=>tip('削除できませんでした')),800)},'削除')}
+function newSeason(){ask('今年のデータをバックアップ保存したうえで、全チーム・全結果を削除します。',()=>{bak();setTimeout(()=>api('DELETE','').then(()=>{tip('全データを削除しました');pull(true)}).catch(e=>tip('削除できませんでした: '+e.message)),800)},'削除')}
 function bak(){const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));l.download='futsal-backup-'+new Date().toISOString().slice(0,10)+'.json';l.click()}
 render();pull();if(ed&&C.databaseURL)initSDK();
 if('serviceWorker'in navigator){if(navigator.serviceWorker.controller)navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());navigator.serviceWorker.register('sw.js')}

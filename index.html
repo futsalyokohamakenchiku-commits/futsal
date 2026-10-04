@@ -32,6 +32,8 @@ svg{width:100%;max-width:420px;background:#fff;border-radius:8px;border:1px soli
 <header><h1><span>フットサル大会 対戦成績</span><button id="lg"></button></h1><nav id="nv"></nav></header>
 <main id="v"></main>
 <dialog id="dl"><div class="row"><b>編集者ログイン</b></div><div class="row"><input id="em" type="email" placeholder="メールアドレス" autocomplete="username" style="width:100%"></div><div class="row"><input id="pw" type="password" placeholder="パスワード" autocomplete="current-password" style="width:100%"></div><div id="er" style="color:var(--red);font-size:12px"></div><div class="row"><button class="p" onclick="login()">ログイン</button><button class="p g" onclick="dl.close()">閉じる</button></div></dialog>
+<dialog id="cf"><div id="cm" style="margin-bottom:10px"></div><input id="ci" style="width:100%;margin-bottom:8px;display:none"><div class="row"><button class="p" id="cok">OK</button><button class="p g" onclick="$('#cf').close()">キャンセル</button></div></dialog>
+<div id="tp" style="position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 14px);background:#14213d;color:#fff;padding:10px 12px;border-radius:8px;display:none;z-index:99"></div>
 <script src="config.js"></script>
 <script>
 const $=s=>document.querySelector(s),C=window.CFG||{},GS=['A','B','C'],TN=['決勝T（1〜4位・Bコート）','5〜8位T','9〜12位T'];
@@ -106,15 +108,18 @@ async function initSDK(){if(sdk)return;const b='https://www.gstatic.com/firebase
  firebase.auth().onAuthStateChanged(u=>{ed=!!u;localStorage.fsEd=u?'1':'';if(u)db.ref('futsal').on('value',s=>{S=s.val()||{};localStorage.fs=JSON.stringify(S);soft()});else{if(db)db.ref('futsal').off()}render()})}
 async function login(){$('#er').textContent='';try{await initSDK();await firebase.auth().signInWithEmailAndPassword($('#em').value.trim(),$('#pw').value);dl.close();$('#pw').value=''}catch(e){$('#er').textContent='ログインできませんでした'}}
 async function logout(){await firebase.auth().signOut();ed=false;localStorage.fsEd='';location.reload()}
-const W=(p,v)=>db.ref('futsal/'+p).update(v).catch(()=>alert('保存できませんでした。通信状況を確認してください'));
-function addT(){const n=$('#rn').value.trim();if(!n)return;db.ref('futsal/teams/'+Date.now()).set({n,g:$('#rg').value});$('#rn').value=''}
-function delT(id){if(confirm(nm(id)+'を削除しますか？（対戦カードが組み直されます）'))db.ref('futsal/teams/'+id).remove()}
+const bl=()=>{const a=document.activeElement;a&&a.blur&&a.blur()};
+function tip(m){const t=$('#tp');t.textContent=m;t.style.display='block';clearTimeout(tip.h);tip.h=setTimeout(()=>t.style.display='none',3500)}
+function ask(m,fn,w){$('#cm').textContent=m;const i=$('#ci');i.value='';i.style.display=w?'block':'none';i.placeholder='「'+w+'」と入力';$('#cok').onclick=()=>{if(w&&i.value.trim()!==w)return tip('「'+w+'」と入力してください');$('#cf').close();bl();fn()};$('#cf').showModal()}
+const W=(p,v,ok)=>db.ref('futsal/'+p).update(v).then(()=>ok&&tip(ok)).catch(()=>tip('保存できませんでした。ログイン状態と通信を確認してください'));
+function addT(){const n=$('#rn').value.trim();if(!n)return;db.ref('futsal/teams/'+Date.now()).set({n,g:$('#rg').value}).then(()=>tip('追加しました'));$('#rn').value='';bl()}
+function delT(id){ask(nm(id)+'を削除しますか？（対戦カードが組み直されます）',()=>db.ref('futsal/teams/'+id).remove().then(()=>tip('削除しました')).catch(()=>tip('削除できませんでした。ログイン状態とデータベースのルールを確認してください')))}
 function setT(k,v){W('m/'+k,{t:v||null})}
-function saveR(k,a,b,tn){const x=$('#x_'+k).value,y=$('#y_'+k).value;if(x===''||y==='')return alert('両チームの得点を入力してください');const w=tn?$('#w_'+k).value:'';
- if(tn&&+x==+y&&!w)return alert('同点のため、勝者を選んでください');W('m/'+k,{a,b,x:+x,y:+y,w:tn&&+x==+y?+w:null});}
-function clrR(k){if(confirm('この試合結果を取り消しますか？'))W('m/'+k,{x:null,y:null,w:null,a:null,b:null})}
+function saveR(k,a,b,tn){const x=$('#x_'+k).value,y=$('#y_'+k).value;if(x===''||y==='')return tip('両チームの得点を入力してください');const w=tn?$('#w_'+k).value:'';
+ if(tn&&+x==+y&&!w)return tip('同点のため、勝者を選んでください');W('m/'+k,{a,b,x:+x,y:+y,w:tn&&+x==+y?+w:null},'保存しました');bl()}
+function clrR(k){ask('この試合結果を取り消しますか？',()=>W('m/'+k,{x:null,y:null,w:null,a:null,b:null},'取り消しました'))}
 function saveOv(k){W('ov',{['T'+k]:[0,1,2,3].map(i=>$('#sd'+k+'_'+i).value).join(',')})}
-function newSeason(){if(!confirm('今年のデータをバックアップ保存したうえで、全チーム・全結果を削除します。よろしいですか？'))return;if(prompt('削除する場合は「削除」と入力してください')!=='削除')return;bak();setTimeout(()=>db.ref('futsal').remove(),800)}
+function newSeason(){ask('今年のデータをバックアップ保存したうえで、全チーム・全結果を削除します。',()=>{bak();setTimeout(()=>db.ref('futsal').remove().then(()=>tip('全データを削除しました')),800)},'削除')}
 function bak(){const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));l.download='futsal-backup-'+new Date().toISOString().slice(0,10)+'.json';l.click()}
 render();pull();if(ed&&C.databaseURL)initSDK();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="フットサル">
+<meta name="theme-color" content="#14213d">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>フットサル大会 対戦成績</title>
+<style>
+:root{--bg:#eef1ec;--ink:#14213d;--ac:#0f766e;--red:#dc2626;--ln:#c9d1c6;--w:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,"Hiragino Sans",sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+header{background:var(--ink);color:#fff;padding:calc(env(safe-area-inset-top) + 8px) 12px 0;position:sticky;top:0;z-index:5}
+h1{font-size:16px;margin:0 0 6px;display:flex;justify-content:space-between;align-items:center}
+h1 button{background:none;border:1px solid #fff6;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px}
+nav{display:flex;overflow-x:auto;gap:2px}nav button{flex:none;background:none;border:0;color:#fffa;padding:8px 12px;font-size:14px;border-bottom:3px solid transparent}
+nav button.on{color:#fff;border-color:#facc15;font-weight:700}
+main{padding:12px}h2{font-size:15px;margin:18px 0 6px}
+.sc{overflow-x:auto;background:var(--w);border-radius:8px;border:1px solid var(--ln)}
+table{border-collapse:collapse;width:100%;font-size:12px;text-align:center}
+td,th{border:1px solid var(--ln);padding:5px 3px;white-space:nowrap}th{background:#e3e9e0}
+td.n,th.n{text-align:left;position:sticky;left:0;background:#fff;max-width:96px;overflow:hidden;text-overflow:ellipsis}th.n{background:#e3e9e0}
+td.x{background:#dde2da}.rk{font-weight:700;color:var(--ac)}small{display:block;color:#666;font-size:10px}
+.mr{display:grid;grid-template-columns:44px 1fr 56px 1fr;gap:4px;align-items:center;background:var(--w);border:1px solid var(--ln);border-radius:8px;padding:7px 8px;margin-bottom:5px}
+.mr .a{text-align:right}.mr em{font-style:normal;font-weight:700;text-align:center}.mr small{grid-column:1/-1;text-align:center}
+.note{background:#fef3c7;border-radius:8px;padding:6px 10px;font-size:12px;margin-bottom:8px}
+input,select,button.p{font-size:16px;padding:7px;border:1px solid #9aa597;border-radius:7px;background:#fff;max-width:100%}
+button.p{background:var(--ac);color:#fff;border:0;font-weight:700;padding:8px 14px}button.g{background:#fff;color:var(--ink);border:1px solid #9aa597}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.sx{width:56px;text-align:center}
+.card{background:var(--w);border:1px solid var(--ln);border-radius:8px;padding:8px;margin-bottom:6px}
+svg{width:100%;max-width:420px;background:#fff;border-radius:8px;border:1px solid var(--ln)}dialog{border:0;border-radius:12px;padding:16px;width:min(92vw,340px)}
+</style></head><body>
+<header><h1><span>フットサル大会 対戦成績</span><button id="lg"></button></h1><nav id="nv"></nav></header>
+<main id="v"></main>
+<dialog id="dl"><div class="row"><b>編集者ログイン</b></div><div class="row"><input id="em" type="email" placeholder="メールアドレス" autocomplete="username" style="width:100%"></div><div class="row"><input id="pw" type="password" placeholder="パスワード" autocomplete="current-password" style="width:100%"></div><div id="er" style="color:var(--red);font-size:12px"></div><div class="row"><button class="p" onclick="login()">ログイン</button><button class="p g" onclick="dl.close()">閉じる</button></div></dialog>
+<script src="config.js"></script>
+<script>
+const $=s=>document.querySelector(s),C=window.CFG||{},GS=['A','B','C'],TN=['決勝T（1〜4位・Bコート）','5〜8位T','9〜12位T'];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let S={};try{S=JSON.parse(localStorage.fs||'{}')}catch(e){}
+let ed=!!localStorage.fsEd,tab='A',court='A',db=null,sdk=false;
+const nm=id=>S.teams?.[id]?.n||'未定',R=k=>S.m?.[k]||{};
+const teamsOf=g=>Object.entries(S.teams||{}).filter(([,t])=>t.g==g).sort((a,b)=>a[0]<b[0]?-1:1).map(([id,t])=>({id,n:t.n}));
+function fx(g){const a=teamsOf(g).map(t=>t.id);if(a.length<2)return[];if(a.length%2)a.push(null);const n=a.length,o=[];
+ for(let r=0;r<n-1;r++){for(let i=0;i<n/2;i++){const p=a[i],q=a[n-1-i];if(p&&q)o.push([p,q])}a.splice(1,0,a.pop())}return o}
+const gm=g=>fx(g).map((f,k)=>({key:g+(k+1),a:f[0],b:f[1],lb:g+'-'+(k+1)}));
+const score=m=>{const r=R(m.key);return r.x!=null&&r.a==m.a&&r.b==m.b?r:null};
+function stand(g){const T=teamsOf(g),n=T.length,P={},M={};T.forEach((t,i)=>P[t.id]={...t,i,w:0,d:0,l:0,gf:0,ga:0,p:0,pl:0});
+ gm(g).forEach(m=>{const r=score(m);if(!r)return;const a=P[m.a],b=P[m.b];a.pl++;b.pl++;a.gf+=r.x;a.ga+=r.y;b.gf+=r.y;b.ga+=r.x;M[m.a+m.b]=[r.x,r.y];M[m.b+m.a]=[r.y,r.x];
+  if(r.x>r.y){a.w++;a.p+=3;b.l++}else if(r.x<r.y){b.w++;b.p+=3;a.l++}else{a.d++;b.d++;a.p++;b.p++}});
+ const mx=Math.max(1,(n-1)*3),L=Object.values(P);L.forEach(t=>{t.gd=t.gf-t.ga;t.rate=t.p/mx});
+ L.sort((a,b)=>b.p-a.p||b.rate-a.rate||b.gd-a.gd||b.gf-a.gf||a.i-b.i);L.forEach((t,i)=>t.r=i+1);L.M=M;return L}
+const Q=(a,b)=>b.rate-a.rate||b.gd-a.gd||b.gf-a.gf;
+function seeds(){const G=GS.map(stand).filter(l=>l.length),Rk=[0,1,2,3].map(i=>G.map(l=>l[i]).filter(Boolean).sort(Q));
+ return[[...Rk[0],...Rk[1].slice(0,1)],[...Rk[1].slice(1),...Rk[2].slice(0,2)],[...Rk[2].slice(2),...Rk[3]]].map(a=>a.sort((x,y)=>x.r-y.r||Q(x,y)).map(t=>t.id))}
+function win(m){const r=R(m.key);if(!m.a||!m.b||r.x==null||r.a!=m.a||r.b!=m.b)return null;return r.x>r.y?m.a:r.x<r.y?m.b:r.w==1?m.a:r.w==2?m.b:null}
+function tm(k){const s=seeds()[k]||[],a=[{key:`T${k}s1`,a:s[0],b:s[3],lb:'準決勝1'},{key:`T${k}s2`,a:s[1],b:s[2],lb:'準決勝2'}];a.push({key:`T${k}f`,a:win(a[0]),b:win(a[1]),lb:'決勝'});return a}
+function ML(ms){return ms.slice().sort((p,q)=>(R(p.key).t||'99:99')<(R(q.key).t||'99:99')?-1:1).map(m=>{const r=score(m)||(m.key[0]=='T'&&R(m.key).a==m.a&&R(m.key).b==m.b&&R(m.key).x!=null?R(m.key):null);
+ return`<div class="mr"><b>${R(m.key).t||'--:--'}</b><span class="a">${esc(nm(m.a))}</span><em>${r?r.x+' - '+r.y:'vs'}</em><span>${esc(nm(m.b))}</span>${r&&r.x==r.y&&r.w?`<small>PK ${esc(nm(r.w==1?m.a:m.b))}の勝ち</small>`:''}<small>${m.lb}</small></div>`}).join('')||'<div class="card">試合がありません</div>'}
+function groupView(g){const L=stand(g);if(!L.length)return'<div class="card">このグループのチームはまだ登録されていません</div>';
+ const hd=L.slice().sort((a,b)=>a.i-b.i);let h=`<h2>${g}コート 予選リーグ</h2><div class="sc"><table><tr><th class="n">チーム</th>${hd.map(t=>`<th>${t.i+1}</th>`).join('')}<th>勝点</th><th>得失</th><th>順位</th></tr>`;
+ hd.forEach(a=>{h+=`<tr><td class="n">${a.i+1} ${esc(a.n)}</td>`;hd.forEach(b=>{if(a.id==b.id)return h+='<td class="x"></td>';const s=L.M[a.id+b.id];h+=s?`<td>${s[0]>s[1]?'○':s[0]<s[1]?'●':'△'}<small>${s[0]}-${s[1]}</small></td>`:'<td></td>'});
+  h+=`<td><b>${a.p}</b><small>${(a.rate*100).toFixed(0)}%</small></td><td>${a.gd>0?'+':''}${a.gd}</td><td class="rk">${a.r}</td></tr>`});
+ return h+`</table></div><div style="font-size:11px;color:#666;margin-top:4px">勝3・分1・負0／順位: 勝点→勝点率→得失点差→総得点</div><h2>試合情報</h2>`+ML(gm(g))}
+function brk(k){const [s1,s2,f]=tm(k),w1=win(s1),w2=win(s2),wf=win(f),sg=[],tx=[];
+ const T=(x,y,id,b)=>tx.push(`<text x="${x}" y="${y-5}" font-size="12"${b?' font-weight="700"':''}>${esc(nm(id))}</text>`);
+ [[s1,30,62,46,w1],[s2,128,160,144,w2]].forEach(([m,ya,yb,ym,w])=>{[[m.a,ya],[m.b,yb]].forEach(([id,y])=>{const r=!!w&&w==id;sg.push([0,y,110,y,r],[110,y,110,ym,r]);T(4,y,id)});sg.push([110,ym,150,ym,!!w])});
+ sg.push([150,46,260,46,!!wf&&wf==w1],[260,46,260,95,!!wf&&wf==w1],[150,144,260,144,!!wf&&wf==w2],[260,144,260,95,!!wf&&wf==w2],[260,95,340,95,!!wf]);
+ T(154,46,w1);T(154,144,w2);if(wf)T(264,95,wf,1);
+ const ln=(x)=>sg.filter(s=>!!s[4]==x).map(s=>`<line x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}" stroke="${x?'#dc2626':'#94a3b8'}" stroke-width="${x?5:2}" stroke-linecap="round"/>`).join('');
+ return`<svg viewBox="-4 0 350 190">${ln(false)}${ln(true)}${tx.join('')}</svg>`}
+function tourView(){const done=GS.every(g=>gm(g).every(m=>score(m)));const any=GS.some(g=>teamsOf(g).length);
+ return(any&&!done?'<div class="note">予選が終わっていないため、組み合わせは暫定です（試合ごとに自動で更新されます）</div>':'')+
+  '<div style="font-size:12px;color:#555">決勝T＝各組1位＋2位のうち勝点率最上位。5〜8位T＝残り2位＋3位上位2チーム。9〜12位T＝残りの3位＋4位。</div>'+
+  [0,1,2].map(k=>`<h2>${TN[k]}</h2>${brk(k)}<h2 style="font-size:13px">試合情報</h2>${ML(tm(k))}`).join('')}
+function regView(){let h='<h2>チーム登録</h2><div class="row"><select id="rg">'+GS.map(g=>`<option>${g}</option>`).join('')+'</select><input id="rn" placeholder="チーム名" style="flex:1;min-width:120px"><button class="p" onclick="addT()">追加</button></div>';
+ GS.forEach(g=>{h+=`<div class="card"><b>${g}グループ（${teamsOf(g).length}チーム）</b>`+teamsOf(g).map(t=>`<div class="row" style="margin:4px 0">${esc(t.n)}<button class="p g" style="margin-left:auto;padding:3px 10px" onclick="delT('${t.id}')">削除</button></div>`).join('')+'</div>'});
+ h+='<h2>試合時間の設定</h2><div style="font-size:12px;color:#555;margin-bottom:6px">チーム登録後に対戦カードが自動で作成されます。変更すると各タブの試合情報に反映されます。</div>';
+ const blk=(t,ms)=>`<div class="card"><b>${t}</b>`+ms.map(m=>`<div class="row" style="margin:4px 0"><span style="flex:1;font-size:12px">${m.lb} ${esc(nm(m.a))} vs ${esc(nm(m.b))}</span><input type="time" value="${R(m.key).t||''}" onchange="setT('${m.key}',this.value)"></div>`).join('')+'</div>';
+ GS.forEach(g=>h+=blk(g+'コート予選',gm(g)));[0,1,2].forEach(k=>h+=blk(TN[k],tm(k)));
+ return h+'<h2>バックアップ</h2><button class="p g" onclick="bak()">データをJSONで保存</button>'}
+function resView(){const ms=court.length==1?gm(court):tm(+court[1]);
+ return`<div class="row"><select id="ct" onchange="court=this.value;render()">${GS.map(g=>`<option value="${g}">${g}コート予選</option>`).join('')}${TN.map((t,k)=>`<option value="T${k}">${t}</option>`).join('')}</select></div>`+
+ ms.map(m=>{const r=R(m.key),ok=r.a==m.a&&r.b==m.b,tn=m.key[0]=='T';if(!m.a||!m.b)return`<div class="card">${m.lb}　対戦チーム未確定</div>`;
+ return`<div class="card"><div style="font-size:12px;color:#555">${m.lb}　${R(m.key).t||'--:--'}</div><div class="row"><span style="flex:1">${esc(nm(m.a))}</span><input class="sx" id="x_${m.key}" type="number" inputmode="numeric" min="0" value="${ok&&r.x!=null?r.x:''}">－<input class="sx" id="y_${m.key}" type="number" inputmode="numeric" min="0" value="${ok&&r.y!=null?r.y:''}"><span style="flex:1;text-align:right">${esc(nm(m.b))}</span></div>
+ <div class="row">${tn?`<select id="w_${m.key}"><option value="">同点時の勝者</option><option value="1" ${ok&&r.w==1?'selected':''}>${esc(nm(m.a))}</option><option value="2" ${ok&&r.w==2?'selected':''}>${esc(nm(m.b))}</option></select>`:''}<button class="p" onclick="saveR('${m.key}','${m.a}','${m.b}',${tn})">保存</button><button class="p g" onclick="clrR('${m.key}')">取消</button></div></div>`}).join('')}
+const VW={A:()=>groupView('A'),B:()=>groupView('B'),C:()=>groupView('C'),T:tourView,reg:regView,res:resView};
+const LB={A:'Aコート予選',B:'Bコート予選',C:'Cコート予選',T:'トーナメント',reg:'登録',res:'結果登録'};
+function render(){if(!C.databaseURL){$('#v').innerHTML='<div class="note">config.js にFirebaseの設定を入力してください（README参照）</div>';return}
+ const tabs=['A','B','C','T',...(ed?['reg','res']:[])];if(!tabs.includes(tab))tab='A';
+ $('#nv').innerHTML=tabs.map(t=>`<button class="${t==tab?'on':''}" onclick="tab='${t}';render();scrollTo(0,0)">${LB[t]}</button>`).join('');
+ $('#lg').textContent=ed?'ログアウト':'編集';$('#lg').onclick=ed?logout:()=>{dl.showModal()};
+ $('#v').innerHTML=VW[tab]();const c=$('#ct');if(c)c.value=court}
+function soft(){const a=document.activeElement;if(ed&&(tab=='reg'||tab=='res')&&a&&a.matches('input,select'))return;render()}
+async function pull(){if(ed||document.hidden||!C.databaseURL)return;try{const r=await fetch(C.databaseURL.replace(/\/$/,'')+'/futsal.json');S=(await r.json())||{};localStorage.fs=JSON.stringify(S);soft()}catch(e){}}
+setInterval(pull,20000);document.addEventListener('visibilitychange',pull);
+function load(u){return new Promise((ok,ng)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=ng;document.head.appendChild(s)})}
+async function initSDK(){if(sdk)return;const b='https://www.gstatic.com/firebasejs/10.12.2/firebase-';await load(b+'app-compat.js');await Promise.all([load(b+'auth-compat.js'),load(b+'database-compat.js')]);
+ firebase.initializeApp(C);db=firebase.database();sdk=true;
+ firebase.auth().onAuthStateChanged(u=>{ed=!!u;localStorage.fsEd=u?'1':'';if(u)db.ref('futsal').on('value',s=>{S=s.val()||{};localStorage.fs=JSON.stringify(S);soft()});else{if(db)db.ref('futsal').off()}render()})}
+async function login(){$('#er').textContent='';try{await initSDK();await firebase.auth().signInWithEmailAndPassword($('#em').value.trim(),$('#pw').value);dl.close();$('#pw').value=''}catch(e){$('#er').textContent='ログインできませんでした'}}
+async function logout(){await firebase.auth().signOut();ed=false;localStorage.fsEd='';location.reload()}
+const W=(p,v)=>db.ref('futsal/'+p).update(v).catch(()=>alert('保存できませんでした。通信状況を確認してください'));
+function addT(){const n=$('#rn').value.trim();if(!n)return;db.ref('futsal/teams/'+Date.now()).set({n,g:$('#rg').value});$('#rn').value=''}
+function delT(id){if(confirm(nm(id)+'を削除しますか？（対戦カードが組み直されます）'))db.ref('futsal/teams/'+id).remove()}
+function setT(k,v){W('m/'+k,{t:v||null})}
+function saveR(k,a,b,tn){const x=$('#x_'+k).value,y=$('#y_'+k).value;if(x===''||y==='')return alert('両チームの得点を入力してください');const w=tn?$('#w_'+k).value:'';
+ if(tn&&+x==+y&&!w)return alert('同点のため、勝者を選んでください');W('m/'+k,{a,b,x:+x,y:+y,w:tn&&+x==+y?+w:null});}
+function clrR(k){if(confirm('この試合結果を取り消しますか？'))W('m/'+k,{x:null,y:null,w:null,a:null,b:null})}
+function bak(){const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));l.download='futsal-backup-'+new Date().toISOString().slice(0,10)+'.json';l.click()}
+render();pull();if(ed&&C.databaseURL)initSDK();
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+</script></body></html>

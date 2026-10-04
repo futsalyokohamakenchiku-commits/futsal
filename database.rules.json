@@ -1,0 +1,1 @@
+{"rules":{"futsal":{".read":true,".write":"auth != null"}}}

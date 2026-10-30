@@ -80,10 +80,10 @@ function groupView(g,only){const L=stand(g);if(!L.length)return'<div class="card
   h+=gv.map(id=>`<td${id=='r'?' class="rk"':''}>${GC[id][1](a)}</td>`).join('')+'</tr>'});
  h+='</table></div>';if(only)return h;return h+`${noteH('g')}<h2>試合情報</h2>`+ML(gm(g))}
 function brk(k){const [s1,s2,f]=tm(k),w1=win(s1),w2=win(s2),wf=win(f),sg=[],tx=[],X=[43,128,212,297];
- const T=(x,y,id,b)=>{const n=nm(id);tx.push(`<text x="${x}" y="${y}" text-anchor="middle" font-size="12"${b?' font-weight="700"':''}>${esc(n.length>7?n.slice(0,6)+'…':n)}</text>`)};
+ const T=(x,y,id,b)=>{const n=nm(id);tx.push(`<text x="${x}" y="${212-y}" text-anchor="middle" font-size="12"${b?' font-weight="700"':''}>${esc(n.length>7?n.slice(0,6)+'…':n)}</text>`)};
  [[s1,0,w1],[s2,2,w2]].forEach(([m,i,w])=>{const xa=X[i],xb=X[i+1],mid=(xa+xb)/2;[[m.a,xa],[m.b,xb]].forEach(([id,x])=>{const r=!!w&&w==id;T(x,20,id);sg.push([x,28,x,70,r],[x,70,mid,70,r])});sg.push([mid,70,mid,98,!!w],[mid,122,mid,150,!!wf&&wf==w]);if(w)T(mid,114,w)});
  sg.push([85.5,150,170,150,!!wf&&wf==w1],[254.5,150,170,150,!!wf&&wf==w2],[170,150,170,176,!!wf]);if(wf)T(170,194,wf,1);
- const ln=x=>sg.filter(q=>!!q[4]==x).map(q=>`<line x1="${q[0]}" y1="${q[1]}" x2="${q[2]}" y2="${q[3]}" stroke="${x?'#dc2626':'#94a3b8'}" stroke-width="${x?5:2}" stroke-linecap="round"/>`).join('');
+ const ln=x=>sg.filter(q=>!!q[4]==x).map(q=>`<line x1="${q[0]}" y1="${204-q[1]}" x2="${q[2]}" y2="${204-q[3]}" stroke="${x?'#dc2626':'#94a3b8'}" stroke-width="${x?5:2}" stroke-linecap="round"/>`).join('');
  const p=S.cfg?.['p'+k]?tm(k)[3]:null,wp=p&&win(p),p3=p?`<text x="4" y="216" font-size="12">3位決定戦 ${wp?'勝者: '+esc(nm(wp)):'（未実施）'}</text>`:'';
  return`<svg viewBox="0 0 340 ${p?224:204}">${ln(false)}${ln(true)}${tx.join('')}${p3}</svg>`}
 function resultsView(){const St=GS.map(stand).flat();if(!St.length)return'<div class="card">チームが登録されていません</div>';
@@ -145,7 +145,7 @@ function render(){if(!C.databaseURL){$('#v').innerHTML='<div class="note">config
  $('#lg').textContent=ed?'ログアウト':'編集';$('#lg').onclick=ed?logout:()=>{dl.showModal()};
  $('#v').innerHTML=VW[tab]();const c=$('#ct');if(c)c.value=court}
 function soft(){const a=document.activeElement;if(ed&&(tab=='reg'||tab=='res')&&a&&a.matches('input,select,textarea'))return;render()}
-const VER='v10',stat=t=>{$('#st').textContent=VER+' / '+t};window.onerror=(m)=>{try{tip('エラー: '+m)}catch(e){}};
+const VER='v11',stat=t=>{$('#st').textContent=VER+' / '+t};window.onerror=(m)=>{try{tip('エラー: '+m)}catch(e){}};
 const BASE=()=>C.databaseURL.replace(/\/$/,'');
 async function pull(f){if(!C.databaseURL||(document.hidden&&!f))return;try{const r=await fetch(BASE()+'/futsal.json',{cache:'no-store'});if(!r.ok){stat('データ取得エラー '+r.status);return}S=(await r.json())||{};localStorage.fs=JSON.stringify(S);stat('最終更新 '+new Date().toLocaleTimeString('ja-JP')+(ed?' / 編集モード':''));soft()}catch(e){stat('データ取得エラー（通信できません）')}}
 setInterval(()=>pull(),15000);document.addEventListener('visibilitychange',()=>pull());

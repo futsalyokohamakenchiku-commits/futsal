@@ -30,7 +30,6 @@ button.p{background:var(--ac);color:#fff;border:0;font-weight:700;padding:8px 14
 .nt{font-size:12px;color:#555;margin-top:8px;line-height:1.6}
 .card{background:var(--w);border:1px solid var(--ln);border-radius:8px;padding:8px;margin-bottom:6px}
 svg{width:100%;max-width:420px;background:#fff;border-radius:8px;border:1px solid var(--ln)}dialog{border:0;border-radius:12px;padding:16px;width:min(92vw,340px)}
-.ut{font-size:14px;margin:5px 0;line-height:1.7}.ug{display:block;width:100%;max-width:320px;margin:8px auto;border:1px solid var(--ln);border-radius:10px}
 </style></head><body>
 <header><h1><span>フットサル大会 対戦成績</span><button id="lg"></button></h1><nav id="nv"></nav></header>
 <main id="v"></main>
@@ -45,8 +44,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 let S={};try{S=JSON.parse(localStorage.fs||'{}')}catch(e){}
 let ed=!!localStorage.fsEd,tab='A',court='A',db=null,sdk=false;
 const DEFN='勝ち点：勝ち3・引き分け1・負け0\n勝ち点率＝獲得勝ち点÷最大勝ち点（最大勝ち点＝(チーム数−1)×3。6チームは15点、5チームは12点）\n各予選の順位：勝ち点→得失点差→総得点（すべて同じ場合はじゃんけんで決定）\n決勝トーナメント：Aコート1位 vs Cコート1位、Bコート1位 vs ブロック2位①（2位のうち勝ち点率が最も高いチーム）、勝者同士が決勝\n5〜8位トーナメント：ブロック2位② vs ブロック3位①、ブロック2位③ vs ブロック3位②、勝者同士が3試合目\n9〜12位トーナメント：ブロック3位③ vs Aコート4位、Bコート4位 vs Cコート4位、勝者同士が3試合目\nブロック内の順位（2位①〜③など）：勝ち点率→1試合あたりの得失点差→1試合あたりの得点\n※各予選の試合数が異なるため、勝ち点率や1試合あたりの得失点差、得点を考慮して順位を決定します。';
-const DEFU="## このアプリについて\n大会の対戦成績・順位・トーナメント表を、スマホでリアルタイムに確認できるアプリです。試合結果が入力されると、約15秒ごとに画面が自動で更新されます。このページは編集者向けです。見るだけの方はログインは不要です。\n## タブの見かた\n・ルール：順位の決め方など\n・Aコート予選／Bコート予選／Cコート予選：総当たり表・順位・試合情報\n・予選結果：全チームの予選成績と、進出するトーナメント\n・トーナメント：決勝T・5〜8位T・9〜12位Tの対戦表\n・アプリの使い方：このページ（編集者がログインしたときだけ表示されます）\n・登録／結果登録：編集者がログインすると表示されます\n[[img:u_top]]\n①アプリ名　②編集ボタン（編集者がログインするときに使います）　③タブ（左右にスワイプすると隠れたタブも見えます）　④表示エリア\n## ホーム画面に追加（iPhone）\n1. Safariでこのアプリを開きます\n2. 画面下の共有ボタン（四角から上向き矢印）をタップします\n3. 「ホーム画面に追加」を選び、「追加」をタップします\n次回からはホーム画面のアイコンですぐに開けます。画面は指を広げて拡大できます。\n## 予選の表の見かた\n[[img:u_table]]\n①チーム（番号とチーム名。横にスクロールしても左に固定）\n②対戦結果のマス（○勝ち　●負け　△引き分け。下に「得点-失点」。試合前は空欄）\n③グレーのマス（同じチーム同士。試合はありません）\n表は左右にスワイプできます。\n[[img:u_table_right]]\n④勝ち点（勝ち3・引き分け1・負け0）\n⑤勝ち点率（獲得勝ち点÷最大勝ち点。6チームは15点、5チームは12点）\n⑥得失点差（総得点−総失点）\n⑦順位（勝ち点→得失点差→総得点。同じ場合はじゃんけんで決定）\n※表に表示する項目は、編集者が変更できます。\n## 試合情報\n[[img:u_matches]]\n表の下に、試合が時刻順に並びます。\n①試合時刻（A・B・Cコート共通）　②左のチーム　③スコア（試合前は「vs」）　④右のチーム　⑤試合名（A-1はAコートの第1試合）\n## 予選結果タブ\n[[img:u_result]]\n全チームの予選成績が、成績の良い順に並びます。\n①注意書き（順位の決め方）\n②成績の表（横にスワイプできます）\n③各グループ順位（A1位＝Aコートの1位）\n右端の「進出」に、進むトーナメント（決勝T／5〜8位T／9〜12位T）が表示されます。\n## トーナメントタブ\n予選が終わるまでは、「Aコート1位」などの組み合わせの予定が表示されます。予選が終わると、チーム名に自動で切り替わります。\n[[img:u_prov]]\n①予選が終わるまでのお知らせ　②組み合わせの予定\n[[img:u_bracket]]\n①1試合目・2試合目の4チーム　②勝ち上がり（赤い太線）　③優勝チーム　④3位決定戦（行う場合のみ）\n・同点でPK戦になったときは、「PK ○○の勝ち」と表示されます。\n・各表の下の「試合情報」で、時刻とスコアを確認できます。\n## 編集者向け：ログインと結果の入力\n[[img:u_login]]\n右上の「編集」をタップし、メールアドレスとパスワードを入力して「ログイン」をタップします。ログインすると「登録」「結果登録」タブが表示されます。共有の端末では、使い終わったらログアウトしてください。\n[[img:u_input]]\n「結果登録」タブでコートを選び、両チームの得点を入力して「保存」をタップします。入力した試合のマスがオレンジ色に光ります。間違えたときは、直して保存し直すか「取消」をタップします。\n[[img:u_tour_input]]\nトーナメントで同点（PK戦）のときは、「同点時の勝者」を選んでから「保存」をタップします。\n## 困ったとき\n・画面が古いままのとき：画面の一番下の「最終更新」の時刻を確認し、アプリを開き直してください。\n・「データ取得エラー」と表示されたとき：電波やWi-Fiを確認してください。回復すれば自動で元に戻ります。\n・編集のタブが見えないとき：ログインしていません。右上の「編集」からログインしてください。\n・「ログインが切れています」と出たとき：ログアウトして、もう一度ログインしてください。\n";
-const note=k=>S.note?.[k]??(k=='u'?DEFU:DEFN),noteH=k=>`<div class="nt">${esc(note(k)).replace(/\n/g,'<br>')}</div>`;
+const note=k=>S.note?.[k]??DEFN,noteH=k=>`<div class="nt">${esc(note(k)).replace(/\n/g,'<br>')}</div>`;
 const GC={p:['勝ち点',t=>`<b>${t.p}</b>`],rate:['勝ち点率',t=>`${(t.rate*100).toFixed(1)}%<small>${t.p}/${t.mx}</small>`],gd:['得失点差',t=>(t.gd>0?'+':'')+t.gd],gf:['総得点',t=>t.gf],r:['順位',t=>`${t.r}${t.jkv!=null?'<small>じゃんけん</small>':''}`]};
 const RC={gr:['各グループ順位',t=>`${t.g}${t.r}位${t.jkv!=null?'<small>じゃんけん</small>':''}`],rate:GC.rate,p:['勝ち点',t=>t.p],gd:GC.gd,gf:GC.gf,ag:['1試合あたり得失点差',t=>(t.ag>0?'+':'')+t.ag.toFixed(2)],af:['1試合あたり得点',t=>t.af.toFixed(2)]};
 const RK={gr:(a,b)=>a.r-b.r,rate:(a,b)=>b.rate-a.rate,p:(a,b)=>b.p-a.p,gd:(a,b)=>b.gd-a.gd,gf:(a,b)=>b.gf-a.gf,ag:(a,b)=>b.ag-a.ag,af:(a,b)=>b.af-a.af};
@@ -94,8 +92,6 @@ function brk(k){const [s1,s2,f]=tm(k),w1=win(s1),w2=win(s2),wf=win(f),sg=[],tx=[
  const ln=x=>sg.filter(q=>!!q[4]==x).map(q=>`<line x1="${q[0]}" y1="${204-q[1]}" x2="${q[2]}" y2="${204-q[3]}" stroke="${x?'#dc2626':'#94a3b8'}" stroke-width="${x?5:2}" stroke-linecap="round"/>`).join('');
  const ex=(mx-1)*13,p=S.cfg?.['p'+k]?tm(k)[3]:null,wp=p&&win(p),p3=p?`<text x="4" y="${216+ex}" font-size="12">3位決定戦 ${wp?'勝者: '+esc(nm(wp)):'（未実施）'}</text>`:'';
  return`<svg viewBox="0 0 340 ${(p?224:204)+ex}">${ln(false)}${ln(true)}${tx.join('')}${p3}</svg>`}
-const usageHtml=t=>String(t).split('\n').map(l=>{l=l.trimEnd();const m=l.match(/^\[\[img:([\w-]+)\]\]$/);if(m)return`<img class="ug" src="manual/${m[1]}.jpg" loading="lazy" alt="">`;if(l.startsWith('## '))return`<h2>${esc(l.slice(3))}</h2>`;return l?`<div class="ut">${esc(l)}</div>`:''}).join('');
-function useView(){return usageHtml(note('u'))}
 function ruleView(){return'<h2>ルール</h2>'+noteH('r')}
 function resultsView(){const St=GS.map(stand).flat();if(!St.length)return'<div class="card">チームが登録されていません</div>';
  const done=GS.every(g=>gm(g).every(m=>score(m))),sd=seeds(),lab={};['決勝T','5〜8位T','9〜12位T'].forEach((n,k)=>sd[k].forEach(id=>id&&(lab[id]=n)));
@@ -122,7 +118,7 @@ function regView(){let h='<h2>チーム登録</h2><div class="row"><select id="r
   `<div class="row"><label><input type="checkbox" ${S.cfg?.['p'+k]?'checked':''} onchange="W('cfg',{p${k}:this.checked?1:null})"> 3位決定戦を行う</label>${o?`<button class="p g sm" style="margin-left:auto" onclick="W('ov',{T${k}:null})">出場チームを自動に戻す</button>`:''}</div>`+
   ctl(k)+det('l'+k,'未確定時の表示文言（対戦表）',lblEd(k))+det('t'+k,'試合の組み合わせ（手動）',tm(k).map(m=>`<div class="row" data-k="${m.key}" onfocusin="mark('${m.key}')" style="margin:4px 0"><b style="width:64px">${m.lb}</b>${selHtml(m.key+'_a',m.a,`saveTo('${m.key}')`)}vs${selHtml(m.key+'_b',m.b,`saveTo('${m.key}')`)}</div>`).join('')+(hasTo?`<button class="p g sm" onclick="resetTo(${k})">自動に戻す</button>`:''))+'</div>'});
  h+=colEdAll()+noteEd();return h+'<h2>バックアップ・新年度</h2><div class="row"><button class="p g" onclick="bak()">データをJSONで保存</button><button class="p" style="background:var(--red)" onclick="newSeason()">新年度の準備（全データ削除）</button></div>'}
-const noteEd=()=>'<h2>注意書きの編集</h2>'+[['u','アプリの使い方タブの文章（見出し：行頭に「## 」／画像：[[img:ファイル名]]）'],['r','ルールタブの文章'],['g','予選タブの注意書き'],['t','予選結果・トーナメントタブの注意書き']].map(([k,t])=>`<div class="card"><b>${t}</b><textarea id="nt_${k}" rows="${k=='u'?16:8}" style="width:100%;font-size:16px;margin:6px 0;padding:7px;border:1px solid #9aa597;border-radius:7px" onchange="saveNote('${k}')">${esc(note(k))}</textarea><button class="p g sm" onclick="W('note',{${k}:null},'初期文に戻しました')">初期文に戻す</button></div>`).join('');
+const noteEd=()=>'<h2>注意書きの編集</h2>'+[['r','ルールタブの文章'],['g','予選タブの注意書き'],['t','予選結果・トーナメントタブの注意書き']].map(([k,t])=>`<div class="card"><b>${t}</b><textarea id="nt_${k}" rows="8" style="width:100%;font-size:16px;margin:6px 0;padding:7px;border:1px solid #9aa597;border-radius:7px" onchange="saveNote('${k}')">${esc(note(k))}</textarea><button class="p g sm" onclick="W('note',{${k}:null},'初期文に戻しました')">初期文に戻す</button></div>`).join('');
 function saveNote(k){W('note',{[k]:$('#nt_'+k).value},'保存しました')}
 function jkEd(){let h='<h2>同順位のじゃんけん結果</h2><div style="font-size:12px;color:#555;margin-bottom:6px">各予選で勝ち点・得失点差・総得点がすべて同じチームは、じゃんけんの結果を入力すると順位が確定します（数字が小さいほど上位）。結果が変わって同順位でなくなったときは、入力は自動的に無効になります。</div>',c=0;
  GS.forEach(g=>ties(g).forEach(a=>{c++;h+=`<div class="card"><b>${g}グループ</b> <span style="font-size:12px;color:#555">勝ち点${a[0].p}・得失点差${a[0].gd}・総得点${a[0].gf}</span>`+a.map(t=>`<div class="row" style="margin:4px 0"><span style="flex:1">${esc(t.n)}</span><select onchange="setJk('${t.id}',${t.p},${t.gd},${t.gf},this.value)"><option value="">未定</option>${a.map((_,i)=>`<option value="${i+1}" ${t.jkv==i+1?'selected':''}>${i+1}位</option>`).join('')}</select></div>`).join('')+'</div>'}));
@@ -150,15 +146,15 @@ function resView(){const ms=court.length==1?gm(court):tm(+court[1]);
  ms.map(m=>{const r=R(m.key),ok=r.a==m.a&&r.b==m.b,tn=m.key[0]=='T';if(!m.a||!m.b)return`<div class="card">${m.lb}　対戦チーム未確定</div>`;
  return`<div class="card" data-k="${m.key}" onfocusin="mark('${m.key}')"><div style="font-size:12px;color:#555">${m.lb}　${tt(m.key)||'--:--'}</div><div class="row"><span style="flex:1">${esc(nm(m.a))}</span><input class="sx" id="x_${m.key}" type="number" inputmode="numeric" min="0" value="${ok&&r.x!=null?r.x:''}">－<input class="sx" id="y_${m.key}" type="number" inputmode="numeric" min="0" value="${ok&&r.y!=null?r.y:''}"><span style="flex:1;text-align:right">${esc(nm(m.b))}</span></div>
  <div class="row">${tn?`<select id="w_${m.key}"><option value="">同点時の勝者</option><option value="1" ${ok&&r.w==1?'selected':''}>${esc(nm(m.a))}</option><option value="2" ${ok&&r.w==2?'selected':''}>${esc(nm(m.b))}</option></select>`:''}<button class="p" onclick="saveR('${m.key}','${m.a}','${m.b}',${tn})">保存</button><button class="p g" onclick="clrR('${m.key}')">取消</button></div></div>`}).join('')}
-const VW={u:useView,rule:ruleView,A:()=>groupView('A'),B:()=>groupView('B'),C:()=>groupView('C'),R:resultsView,T:tourView,reg:regView,res:resView};
-const LB={u:'アプリの使い方',rule:'ルール',A:'Aコート予選',B:'Bコート予選',C:'Cコート予選',R:'予選結果',T:'トーナメント',reg:'登録',res:'結果登録'};
+const VW={rule:ruleView,A:()=>groupView('A'),B:()=>groupView('B'),C:()=>groupView('C'),R:resultsView,T:tourView,reg:regView,res:resView};
+const LB={rule:'ルール',A:'Aコート予選',B:'Bコート予選',C:'Cコート予選',R:'予選結果',T:'トーナメント',reg:'登録',res:'結果登録'};
 function render(){if(!C.databaseURL){$('#v').innerHTML='<div class="note">config.js にFirebaseの設定を入力してください（README参照）</div>';return}
- const tabs=['rule','A','B','C','R','T',...(ed?['u','reg','res']:[])];if(!tabs.includes(tab))tab='A';
+ const tabs=['rule','A','B','C','R','T',...(ed?['reg','res']:[])];if(!tabs.includes(tab))tab='A';
  $('#nv').innerHTML=tabs.map(t=>`<button class="${t==tab?'on':''}" onclick="tab='${t}';render();scrollTo(0,0)">${LB[t]}</button>`).join('');
  $('#lg').textContent=ed?'ログアウト':'編集';$('#lg').onclick=ed?logout:()=>{dl.showModal()};
  $('#v').innerHTML=VW[tab]();const c=$('#ct');if(c)c.value=court}
 function soft(){const a=document.activeElement;if(ed&&(tab=='reg'||tab=='res')&&a&&a.matches('input,select,textarea'))return;render()}
-const VER='v14',stat=t=>{$('#st').textContent=VER+' / '+t};window.onerror=(m)=>{try{tip('エラー: '+m)}catch(e){}};
+const VER='v13',stat=t=>{$('#st').textContent=VER+' / '+t};window.onerror=(m)=>{try{tip('エラー: '+m)}catch(e){}};
 const BASE=()=>C.databaseURL.replace(/\/$/,'');
 async function pull(f){if(!C.databaseURL||(document.hidden&&!f))return;try{const r=await fetch(BASE()+'/futsal.json',{cache:'no-store'});if(!r.ok){stat('データ取得エラー '+r.status);return}S=(await r.json())||{};localStorage.fs=JSON.stringify(S);stat('最終更新 '+new Date().toLocaleTimeString('ja-JP')+(ed?' / 編集モード':''));soft()}catch(e){stat('データ取得エラー（通信できません）')}}
 setInterval(()=>pull(),15000);document.addEventListener('visibilitychange',()=>pull());
